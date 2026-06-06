@@ -1,90 +1,46 @@
 # ArchScope
 
-Repository analysis and architecture inspection tool. Analyzes source-code projects and delivers AI-powered architectural insights.
+Most codebases are never truly understood — not even by the people who built them. They grow in layers, accumulate decisions nobody remembers making, and resist change not because the code is bad, but because nobody has a clear picture of what it actually is.
+
+ArchScope is an attempt to fix that.
 
 ---
 
-## Quick Start
+## The Idea
 
-### 1 — Configure your AI provider
+Point ArchScope at any repository — a GitHub URL, a ZIP, a folder on your machine — and it reads the entire codebase the way a senior engineer would on their first week: systematically, without assumptions, looking for the things that matter.
 
-Edit `ArchScope.API/appsettings.json`:
+It runs six analysis passes in sequence, each building on the last:
 
-```json
-{
-  "AiProvider": {
-    "Provider": "Claude",
-    "Claude": {
-      "ApiKey": "sk-ant-...",
-      "Model": "claude-sonnet-4-20250514"
-    }
-  }
-}
-```
+- **Structure** — What is this? How is it organized? What are the entry points?
+- **Modules** — What does each part do? Are responsibilities clear or tangled?
+- **Dependencies** — How does data flow? Where is coupling too tight?
+- **Dead code** — What exists but no longer matters?
+- **Quality** — Where are the real maintainability problems?
+- **Executive summary** — Given all of the above, what should actually be done first?
 
-Set `Provider` to `"OpenAI"` and fill `OpenAI.ApiKey` to switch providers with zero code changes.
+The output is a structured report with honest, specific findings — not a checklist of style violations or a generic scorecard, but the kind of assessment you'd get from a good consultant who read everything and told you the truth.
 
 ---
 
-### 2 — Run the backend
+## Why It Exists
 
-```bash
-cd ArchScope.API
-dotnet run
-# API starts on http://localhost:5000
-# Swagger UI at http://localhost:5000/swagger
-# Health check: GET http://localhost:5000/health
-```
+Code review tools catch bugs. Linters enforce style. Static analyzers find security holes.
 
----
+None of them answer the question engineers actually ask when they join a project, inherit a codebase, or try to plan a refactor: *what is this thing, really, and what's wrong with it?*
 
-### 3 — Run the frontend
+That question requires reading the code with architectural intent — understanding not just what the code does line by line, but whether the structure makes sense, whether the abstractions are earning their complexity, and whether the design will hold up under the next six months of changes.
 
-```bash
-cd archscope-ui
-npm install
-npm run dev
-# UI starts on http://localhost:3000
-```
+ArchScope uses AI to do that reading. The goal isn't to replace engineering judgment — it's to compress the time it takes to form a clear, honest picture of an unfamiliar codebase.
 
 ---
 
-## What It Does
+## Provider Agnostic
 
-ArchScope runs 6 sequential analysis passes over an ingested repository:
-
-| Pass | What it analyzes |
-|------|-----------------|
-| Structure Analysis | Architecture pattern, folder organization, entry points |
-| Module Analysis | Per-module responsibilities, design quality |
-| Dependency Analysis | DI setup, coupling, data flow |
-| Dead Code Detection | Orphaned files, duplicate logic, stale abstractions |
-| Code Quality Analysis | Naming, patterns, maintainability, top 5 improvements |
-| Executive Summary | Synthesizes all passes into a prioritized action plan |
+ArchScope talks to AI providers via raw HTTP — no SDKs, no lock-in. It currently supports Claude, OpenAI, Groq, and OpenRouter, switchable with a single config line. The analysis quality scales with the model you point it at.
 
 ---
 
-## Input Sources
+## Stack
 
-- **GitHub URL** — `https://github.com/owner/repo` or with branch
-- **ZIP file** — Upload a `.zip` archive (max 100 MB)
-- **Local folder** — Absolute path to a project on the same machine
-
----
-
-## Architecture
-
-```
-ArchScope.Core/         Domain models + interfaces (zero dependencies)
-ArchScope.Services/     Business logic: ingestion, analysis, reporting
-ArchScope.Infrastructure/ AI clients (Claude/OpenAI via raw HTTP), SQLite persistence
-ArchScope.API/          HTTP layer: controllers, middleware, DI wiring
-archscope-ui/           React 18 + TypeScript + Vite + Tailwind
-```
-
----
-
-## Tech Stack
-
-**Backend** — .NET 8, ASP.NET Core, EF Core + SQLite, no AI SDKs (raw HTTP)  
-**Frontend** — React 18, TypeScript, Vite, Tailwind CSS, TanStack Query, Axios
+.NET 8 backend, React 18 frontend, SQLite for persistence. Built to run locally with no cloud dependencies beyond the AI provider of your choice.
